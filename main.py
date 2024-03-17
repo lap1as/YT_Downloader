@@ -1,14 +1,18 @@
 import asyncio
 import logging
+import sys
 
 from core.settings import settings
-from core.handlers.basic import get_start, stop_bot
+from core.handlers.basic import get_start
 from core.handlers.video_downloader import download_video
 
 from aiogram.filters import Command
+from aiogram.types import Message
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram import F
+
+
 
 
 async def start():
@@ -16,11 +20,18 @@ async def start():
     default = DefaultBotProperties(parse_mode=settings.bots.parse_mode)
     bot = Bot(token=settings.bots.bot_token, default=default)
 
+    async def stop_bot(message: Message):
+        await message.reply("Stopping the bot...")
+        await bot.close()
+        sys.exit()
+
     dp = Dispatcher()
 
     dp.message.register(get_start, Command("start"))
     dp.message.register(download_video, F.text == "Download video")
-    dp.message.register(stop_bot(bot=bot), commands="stop")
+    dp.message.register(stop_bot, Command("stop"))
+
+
 
     try:
         await dp.start_polling(bot)
