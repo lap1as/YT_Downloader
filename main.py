@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from core.settings import settings
-from core.handlers.basic import get_start
+from core.handlers.basic import get_start, stop_bot
 from core.handlers.video_downloader import download_video
 
 from aiogram.filters import Command
@@ -20,6 +20,7 @@ async def start():
 
     dp.message.register(get_start, Command("start"))
     dp.message.register(download_video, F.text == "Download video")
+    dp.message.register(stop_bot(bot=bot), commands="stop")
 
     try:
         await dp.start_polling(bot)
