@@ -5,11 +5,14 @@ from pytube.exceptions import VideoUnavailable
 import re
 
 from core.utils.states import StepsVideoDownloader
+
+
 async def youtube_link_check(message: Message, state: FSMContext):
     if state.get_state():
         re.match(r'(https?://)?(www\.)?(youtube\.com/watch\?v=|youtu\.be/)[\w-]+(&\S*)?$', message.text)
     else:
-        await message.reply("Це не ссилка на відео YouTube.")
+        await message.reply("It's not a valid youtube video link")
+
 
 async def check_video_existence(video_url):
     try:
