@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 
 from aiogram.types import Message
 from aiogram.types import FSInputFile
@@ -8,6 +9,8 @@ from pytube import YouTube
 from pytube.exceptions import VideoUnavailable
 
 
+class StreamSelectionException(Exception):
+    """Raised when a suitable video stream cannot be selected"""
 
 
 async def check_video_existence(video_url):
@@ -17,37 +20,46 @@ async def check_video_existence(video_url):
     except VideoUnavailable:
         return False
 
-async def chose_stream(url):
-    """Compleate resolution chose"""
+
+async def chose_video_resolution(url, folder_path, name_of_video):
+    """Choose video stream with resolution less than or equal to 50 MB"""
     yt = YouTube(url)
-    stream = yt.streams.get_highest_resolution()
-    streams = yt.streams.filter(progressive=True)
-    chosen_stream = None
+    try:
+        stream = next((stream for stream in yt.streams.filter(progressive=True) if stream.filesize <= 50 * 1024 * 1024), None)
+        if stream:
+            stream.download(output_path=folder_path, filename=name_of_video)
+            logging.log(msg=f"Video {name_of_video} downloaded", level=logging.INFO)
+            return True
+        else:
+            logging.warning(msg=f"Video {name_of_video} does not have a stream with a size less than or equal to 50 MB")
+            return False
+    except StreamSelectionException:
+        logging.error(msg=f"Failed to choose a stream for video {name_of_video}")
+        return False
 
 
 async def download_video(message: Message):
     if await check_video_existence(message.text):
         try:
-            await message.answer("Downloading video...")
-            yt = YouTube(message.text)
-            stream = yt.streams.get_highest_resolution()
-            streams = yt.streams.filter(progressive=True)
-            chosen_stream = None
+            folder_path = Path("videos")
+            videos_folder = "videos"
+            base_dir = Path.cwd()
+            full_path_of_downloaded_video = base_dir / videos_folder / f"{message.message_id}.mp4"
+            path_of_downloaded_video = full_path_of_downloaded_video.resolve()
+            if await chose_video_resolution(url=message.text, folder_path=folder_path, name_of_video=f"{message.message_id}.mp4"):
+                try:
+                    video = FSInputFile(path_of_downloaded_video)
+                    await message.answer_video(video)
+                    await message.answer("Video Downloaded!")
+                    return True
+                except Exception as e:
+                    logging.error(e)
 
-            full_path = str(os.path.abspath("videos"))
-            name_of_video = str(f"{message.message_id}.mp4")
-            stream.download(output_path=full_path, filename=name_of_video)
-            await message.answer("Video Downloaded!")
-
-            path_of_downloaded_video = str(f"{full_path}\\{name_of_video}")
-            file_size = round((os.stat(path_of_downloaded_video).st_size) / (1024 * 1024))
-
-            if file_size <= 50:
-                video = FSInputFile(path_of_downloaded_video)
-                await message.answer_video(video)
-                os.remove(path_of_downloaded_video)
             else:
                 await message.answer("Sorry video is too large")
-                os.remove(path_of_downloaded_video)
-        except Exception as e:
+        except FileNotFoundError:
             logging.error(e)
+            await message.answer("Failed to download video. Please try again later.")
+        finally:
+            if path_of_downloaded_video.exists():
+                os.remove(path_of_downloaded_video)

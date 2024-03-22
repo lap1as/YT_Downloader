@@ -5,10 +5,8 @@ from core.settings import settings
 from core.handlers.basic import get_start, waiting_for_url
 from core.handlers.video_downloader import download_video
 from core.filters.isYoutubeUrl import IsYoutubeUrl
-from core.utils.states import StepsVideoDownloader
 
 from aiogram.filters import Command
-from aiogram.types import Message
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram import F
