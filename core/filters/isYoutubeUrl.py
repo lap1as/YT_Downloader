@@ -9,6 +9,7 @@ class IsYoutubeUrl(BaseFilter):
             url = message.text
             match = re.match(r'(https?://)?(www\.)?(youtube\.com/watch\?v=|youtu\.be/)[\w-]+(&\S*)?$', url)
             if match:
+
                 return True
         except:
             return False

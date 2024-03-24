@@ -10,8 +10,14 @@ class Bots:
 
 
 @dataclass
+class Database:
+    uri: str
+
+
+@dataclass
 class Settings:
     bots: Bots
+    db: Database
 
 
 def get_settings(path: str):
@@ -23,6 +29,9 @@ def get_settings(path: str):
             bot_token=env.str("BOT_TOKEN"),
             admin_id=int(env.str("ADMIN_ID")),
             parse_mode="HTML"
+        ),
+        db=Database(
+            uri=env.str("MONGODB_URI")
         )
     )
 

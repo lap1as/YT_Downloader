@@ -10,6 +10,8 @@ python = "^3.12"
 pytube = "^15.0.0"
 aiogram = "^3.4.1"
 environs = "^11.0.0"
+pymongo = {extras = ["srv"], version = "^4.6.2"}
+redis = "^5.0.3"
 
 
 [build-system]
