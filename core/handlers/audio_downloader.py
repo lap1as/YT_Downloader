@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from pathlib import Path
 
 from aiogram.fsm.context import FSMContext
@@ -28,13 +29,14 @@ async def download_audio(message: Message, state: FSMContext):
 
         # Define file name and full path for the downloaded audio
         file_name = f"{yt.title}.mp3"
+        clean_filename = re.sub(r'[\\/:*?"<>| ]', '_', file_name)
         base_dir = Path.cwd()
-        full_path_of_downloaded_audio = base_dir / audios_folder / f"{message.message_id}.mp3"
+        full_path_of_downloaded_audio = base_dir / audios_folder / clean_filename
 
         # Download audio from YouTube
         logger.info("Downloading audio...")
         yt.streams.filter(only_audio=True).first().download(output_path=folder_path,
-                                                            filename=f"{message.message_id}.mp3")
+                                                            filename=str(clean_filename))
         logger.info("Audio downloaded successfully.")
 
         # Create an FSInputFile object for the downloaded audio

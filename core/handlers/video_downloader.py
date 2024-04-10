@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from pathlib import Path
 
 from aiogram.fsm.context import FSMContext
@@ -44,22 +45,23 @@ async def download_video(message: Message, state: FSMContext):
     """Download video from the provided URL."""
     if await check_video_existence(message.text):
         try:
+            yt = YouTube(message.text)
             folder_path = Path("videos")
             videos_folder = "videos"
             base_dir = Path.cwd()
-            full_path_of_downloaded_video = base_dir / videos_folder / f"{message.message_id}.mp4"
+            filename = f"{yt.title}.mp3"
+            clean_filename = re.sub(r'[\\/:*?"<>| ]', '_', yt.title)
+            full_path_of_downloaded_video = base_dir / videos_folder / clean_filename
             path_of_downloaded_video = full_path_of_downloaded_video.resolve()
-            if await chose_video_resolution(url=message.text, folder_path=folder_path, name_of_video=f"{message.message_id}.mp4"):
-                try:
-                    logger.info("Downloading video...")
-                    yt = YouTube(message.text)
-                    video = FSInputFile(path_of_downloaded_video)
-                    await message.answer("Downloading video...")
-                    await message.answer_video(video, caption=yt.title, reply_markup=repy_keyboard)
-                    logger.info("Video sent successfully.")
-                    return True
-                except Exception as e:
-                    logger.error(f"Error while sending video: {e}")
+            if await chose_video_resolution(url=message.text, folder_path=folder_path, name_of_video=clean_filename):
+                logger.info("Downloading video...")
+                yt = YouTube(message.text)
+                video = FSInputFile(path_of_downloaded_video)
+                await message.answer("Downloading video...")
+                await message.answer_video(video, caption=yt.title, reply_markup=repy_keyboard)
+                logger.info("Video sent successfully.")
+                return True
+
             else:
                 logger.warning("Video is too large.")
                 await message.answer("Sorry, the video is too large.")
